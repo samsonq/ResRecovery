@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ## ResRecovery
 
 Website: https://stephdoan.github.io/ResRecovery/
@@ -29,9 +28,6 @@ Changing the chunk size of user data has no impact on the actual classifier. The
     <code>python run.py predict</code> will use our trained model to predict results from new data. It is not necessary to run <code>features</code> as feature creation is accounted for in this target.
   </li>
 </ul>
-=======
-# ResRecovery
-DSC180B Capstone Project
+
 
 https://stephdoan.github.io/ResRecovery/
->>>>>>> 8c4c079847def4bdcf7be6fe7beca3f61e6a5cff
