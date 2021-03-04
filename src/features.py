@@ -2,16 +2,23 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 from scipy.signal import find_peaks
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8c4c079847def4bdcf7be6fe7beca3f61e6a5cff
 from utils import *
 
 ### Aggregate Features ###
 def agg_feat(df, col):
     """
     takes in a dataframe and a column. column values should be numeric.
+<<<<<<< HEAD
 
     returns the mean, and standard deviation of the column.
 
+=======
+    returns the mean, and standard deviation of the column.
+>>>>>>> 8c4c079847def4bdcf7be6fe7beca3f61e6a5cff
     """
     return [np.mean(df[col]), np.std(df[col])]
 
@@ -45,7 +52,10 @@ def spectral_features(df, col):
 
     """
     welch implemention of spectral features.
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8c4c079847def4bdcf7be6fe7beca3f61e6a5cff
     resample the data before inputting (might change prereq depending on
     resource allocation).
     """
@@ -95,7 +105,10 @@ def rolling_window(placeholder):
 def chunk_data(df, interval=60):
     """
     takes in a dataframe and an interval defined in seconds.
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8c4c079847def4bdcf7be6fe7beca3f61e6a5cff
     returns a list of dataframes of equal time.
     """
     df_list = []
@@ -163,7 +176,11 @@ def create_features(filepath, interval=60):
         dwl_peak = peak_time_diff(chunk, '2->1Bytes')
         upl_peak = peak_time_diff(chunk, '1->2Bytes')
 
+<<<<<<< HEAD
         ## iman's time between peak 
+=======
+        ## iman's time between peak
+>>>>>>> 8c4c079847def4bdcf7be6fe7beca3f61e6a5cff
         iman_dwn_time_peak = np.mean(peak_times(chunk,'2->1Bytes',1000000))
         #iman_up_time_peak = np.mean(peak_times(chunk,'1->2Bytes',50000))
 
