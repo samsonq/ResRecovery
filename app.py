@@ -22,7 +22,7 @@ chunk_size = 120
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('indexx.html')
 
 
 def transform(text_file_contents):
@@ -46,7 +46,7 @@ def predict_baseline():
     prediction = stats.mode(extended_model.predict(X))[0][0]
     resolutions = {1: "240p", 2: "480p", 3: "1080p"}
 
-    return render_template('index.html',
+    return render_template('indexx.html',
                            prediction_text_extended='The predicted resolution is: {}'.format(resolutions[prediction]))
 
 
@@ -67,7 +67,7 @@ def predict_extended():
     prediction = stats.mode(extended_model.predict(X))[0][0]
     resolutions = {1: "Low", 2: "Medium", 3: "High"}
 
-    return render_template('index.html',
+    return render_template('indexx.html',
                            prediction_text_extended='The predicted resolution is: {}'.format(resolutions[prediction]))
 
 
