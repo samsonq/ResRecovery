@@ -3,7 +3,7 @@ import sys
 import numpy as np
 from scipy import stats
 import pandas as pd
-import pickle, dill
+import pickle
 import io
 from io import StringIO
 import sklearn
@@ -15,7 +15,6 @@ import warnings
 warnings.filterwarnings("ignore")
 
 app = Flask(__name__)
-#model = dill.load(open("./model/randomforest_chkpt2.obj", "rb"))
 baseline_model = pickle.load(open("./model/baseline_model.pkl", "rb"))
 extended_model = pickle.load(open("./model/extended_model.pkl", "rb"))
 chunk_size = 120
