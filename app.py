@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 
 app = Flask(__name__)
 baseline_model = pickle.load(open("./model/baseline_model.pkl", "rb"))
-extended_model = pickle.load(open("./model/extended_model.pkl", "rb"))
+extended_model = pickle.load(open("./model/final_model.pkl", "rb"))
 chunk_size = 120
 
 
