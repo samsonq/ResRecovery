@@ -1,19 +1,97 @@
-#jumbotron_1 {
-    text-align: center;
+/* Global */
+* {
+    font-family: 'Arvo', 'Ariel';
+    padding: 0;
+    margin: auto;
+    line-height: 1.2rem;
+    background-color: #FBFAF7;
 }
 
-.nav-link{
-    margin-left: 120px;
+h2, p {
+  padding-bottom: 1.5rem;
 }
 
-.h1-style{
-    margin-top: 10px;
-    text-align: center;
-    font-style: italic;
+li {
+    text-decoration: none;
+    padding-bottom: 1rem;
 }
 
-.p-style{
-    text-align: center;
-    margin-left: 60px;
-    margin-right: 60px;
+.container {
+  width: 70vw;
+  padding: 0 1.5rem;
+  margin: auto;
+  overflow: hidden;
+}
+
+a {
+  text-decoration: none;
+  display: inline-block;
+  color: black;
+}
+
+/* Title Section */
+#title {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 3rem 0 ;
+  margin: auto;
+  font-size: 1.8rem;
+}
+
+#title h1 {
+  color: #AF0011;
+}
+
+/* Model */
+#models {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: top;
+}
+
+#models ul {
+  margin-bottom: .5rem; 
+}
+
+#models .baseline {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 50%;
+}
+
+#models .extended {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 50%;
+
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items:center;
+  justify-content: center;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.8rem 3rem;
+  font-size: 1.6rem;
+  transition: all 0.25s;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  color: #FBFAF7;
+  background-color: #AF0011;
+}
+
+.btn:hover {
+  background-color: #AF0011;
+  filter: brightness(.9);
 }
