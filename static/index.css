@@ -69,16 +69,12 @@ a {
     justify-content: center;
     align-items: center;
     width: 50%;
-
 }
 
 #predictions {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    text-align: center;
     width: 50%;
-
 }
 
 form {

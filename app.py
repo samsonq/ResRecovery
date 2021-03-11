@@ -64,11 +64,11 @@ def predict_extended():
     X = pd.DataFrame(columns=features, data=X)
     array_preds = extended_model.predict(X)
     prediction = stats.mode(array_preds)[0][0]
-    display_text = "The predicted resolutions for each interval are: {} \n Overall, " \
+    display_text = "The predicted resolutions for each interval are: {}.  \n Overall, " \
                    "the most commonly predicted resolution is: {}.".format(array_preds, prediction)
 
     return render_template('index.html', prediction_text_extended=display_text)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
