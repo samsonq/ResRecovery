@@ -1,185 +1,169 @@
+import os
+import sys
 import numpy as np
 import pandas as pd
 import scipy as sp
 from scipy.signal import find_peaks
 
-from utils import *
+sys.path.insert(0, '../src')
+from utils import explode_extended, chunk_data
 
-### Aggregate Features ###
-def agg_feat(df, col):
-    """
-    takes in a dataframe and a column. column values should be numeric.
-    returns the mean, and standard deviation of the column.
-    """
-    return [np.mean(df[col]), np.std(df[col])]
+mbit_rate = 1 / 125000
+features = [
+        "download_avg",
+        "download_std",
+        # "diff_pkts",
+        "peak_avg",
+        "peak_std",
+        "peak_amount",
+        "seconds_per_peak",
+        # "psd_std",
+        "prominence_std",
+        "max_prominence",
+        "rolling_cv"
+    ]
 
 
-### Peak Related Aggregate Features ###
-def peak_time_diff(df, col):
+def hard_threshold_peaks(df, col, thresh):
     """
-    mess around with the different inputs for function.
-    variance seems to inflate the difference betweent the two the most with litte
-    to no data manipulation. however, currently trying things like
-    squaring the data before taking the aggregate function to exaggerate
-    differences (moderate success??)
+    takes in a dataframe and a column. finds the location of spikes given by
+    thresh. thresh is a megabit value
     """
-    peaks = df[get_peak_loc(df, col)]
-    peaks['Time'] = peaks['Time'] - peaks['Time'].min()
-    time_diff = np.diff(peaks['Time'] ** 2)
-    return [np.mean(time_diff), np.var(time_diff), np.std(time_diff)]
+    x = df[col]
+    peaks, _ = sp.signal.find_peaks(x, height=thresh)
+    return peaks
 
-### Spectral Features ###
-"""
-TODO
-- take some aggregate value of binned frequency (e.g. what should we expect
-to see in a range of frequencies for x resolution?)
-- try to determine frequency relativeness and compare from there (this is
-mostly related to relativeness within the data itself and not across
-resolutions)
-- do more with rolling windows (small windows catch the details, big windows catch
-the overall behavior)
-"""
-def spectral_features(df, col):
 
+def peak_features(df, col, threshold):
     """
-    welch implemention of spectral features.
+    threshold is a megabit value that is converted to bytes
+    """
+    mbps_thresh = threshold * 125000
+    # peaks = df[get_peak_loc(df, col)]
+    peaks = df.iloc[hard_threshold_peaks(df, col, mbps_thresh)]
+
+    if len(peaks) <= 0:
+        return [0, 0, 0, 120]
+
+    return [np.mean(peaks)[col] * mbit_rate, np.std(peaks)[col] * mbit_rate, len(peaks), 120 / len(peaks)]
+
+
+def power_density(df, bins, sampling):
+    f, psd = sp.signal.welch(df['pkt_size'], fs=sampling)
+    psd = np.sqrt(psd)
+    freq = np.linspace(0, np.max(f) + .01, num=bins) - .001
+    total = np.trapz(y=psd, x=f)
+    psd_den_lst = []
+
+    for i in np.arange(len(freq) - 1):
+        f_lower = np.where(f >= freq[i])
+        f_upper = np.where(f < freq[i + 1])
+        selected_range = np.intersect1d(f_lower, f_upper)
+
+        psd_den = np.trapz(y=psd[selected_range], x=f[selected_range]) / total
+        psd_den_lst.append(psd_den)
+
+    return psd_den_lst
+
+
+def spectral_features(df, col, sampling):
+    """
+    welch implemention of spectral features
     resample the data before inputting (might change prereq depending on
-    resource allocation).
+    resource allocation)
     """
 
-    f, Pxx_den = sp.signal.welch(df[col], fs = 2)
+    _, Pxx_den = sp.signal.welch(df[col] / 125000, fs=sampling)
     Pxx_den = np.sqrt(Pxx_den)
 
     peaks = sp.signal.find_peaks(Pxx_den)[0]
     prominences = sp.signal.peak_prominences(Pxx_den, peaks)[0]
 
     idx_max = prominences.argmax()
-    loc_max = peaks[idx_max]
 
-    return [f[loc_max], Pxx_den[loc_max], prominences[idx_max]]
+    return [np.std(prominences), prominences[idx_max]]
 
-def peak_times(df,col,thresh):
-    x = df[col]
-    peaks, _ = find_peaks(x, height=thresh)
-    if list(peaks) == []:
-        return [-1]
-    times = df.iloc[peaks]['Time'].values
-    time_between_peaks = [times[i]-times[i-1]for i in range(1,len(times))]
-    #print(time_between_peaks)
-    #time_between_peaks[0]=0
-    if time_between_peaks == []:
-        return -1
-    return time_between_peaks
 
-def num_peaks(df,col,thresh):
-    x = df[col]
-    peaks, _ = find_peaks(x, height=thresh)
-    return len(peaks)
+def normalized_std(df, col):
+    df_avg = np.mean(df[col])
+    df_std = np.std(df[col])
 
-def binned_freq(placeholder):
-    """
-    dummy implementation of binned frequencies
-    """
-    return
+    return df_std / df_avg
 
-def rolling_window(placeholder):
-    """
-    dummy implementation of rolling window features
-    """
-    return
 
-### Create Features ###
-def chunk_data(df, interval=60):
-    """
-    takes in a dataframe and an interval defined in seconds.
-    returns a list of dataframes of equal time.
-    """
-    df_list = []
+def rolling_normalized_std(df, sample_size):
+    df_roll = df.rolling(sample_size).mean()
+    roll_cv = normalized_std(df_roll, 'pkt_size')
+    return roll_cv
 
-    # normalizes unix time to be seconds from start
-    df['Time'] = df['Time'] - df['Time'].min()
 
-    total_chunks = np.floor(df['Time'].max() / interval).astype(int)
-
-    for chunk in np.arange(total_chunks):
-
-        start = chunk * interval
-        end = (chunk+1) * interval
-
-        temp_df = df[(df['Time'] >= start) & (df['Time'] < end)]
-
-        df_list.append(temp_df)
-
-    return df_list
-
-def create_features(filepath, interval=60):
-
-    features = [
-        'dwl_peak_freq',
-        'dwl_max_psd',
-        'dwl_peak_prom',
-        'dwl_bytes_avg',
-        'dwl_bytes_std',
-        'dwl_peak_avg',
-        'dwl_peak_var',
-        'dwl_peak_std',
-        'upl_peak_freq',
-        'upl_max_psd',
-        'upl_peak_prom',
-        'upl_bytes_avg',
-        'upl_bytes_std',
-        'upl_peak_avg',
-        'upl_peak_var',
-        'upl_peak_std',
-        'IMAN_dwn_time_peak',#'IMAN_up_time_peak',
-        'IMAN_dwn_num_peak'#,'IMAN_up_num_peak'
-    ]
-
+# Create Features
+def create_features(df, interval, threshold, prominence_fs, binned_fs):
     vals = []
-
-    df = pd.read_csv(filepath)
+    mbit = 125000
 
     df_chunks = chunk_data(df, interval)
 
     for chunk in df_chunks:
+        extended = explode_extended(chunk)
+        resample_1s = extended.resample('1000ms', on='Time').sum()
+        resample_2s = extended.resample('2000ms', on='Time').sum()
 
-        preproc = convert_ms_df(chunk, True)
-        upl_bytes = preproc[preproc['pkt_src'] == '1'].resample('500ms', on='Time').sum()
-        dwl_bytes = preproc[preproc['pkt_src'] == '2'].resample('500ms', on='Time').sum()
+        # average amount of bytes/second in a chunk
+        download_avg = np.mean(chunk['2->1Bytes']) / mbit
+        download_std = np.std(chunk['2->1Bytes']) / mbit
+        # diff_pkts = np.mean(chunk['2->1Pkts'] - chunk['1->2Pkts'])
 
-        ## spectral features
-        dwl_spectral = spectral_features(dwl_bytes, 'pkt_size')
-        upl_spectral = spectral_features(upl_bytes, 'pkt_size')
+        # peak - average, # peaks, seconds:peak ratio
+        peak_feats = peak_features(chunk, '2->1Bytes', threshold)
 
-        ## aggregate features
-        dwl_agg = agg_feat(chunk, '2->1Bytes')
-        upl_agg = agg_feat(chunk, '1->2Bytes')
+        # spectral - standard deviation of densities, prominence
+        # psd_density = power_density(resample_2s, 3, binned_fs)
+        # psd_density_stdev = np.std(psd_density)
+        prominence_feat = spectral_features(resample_1s, 'pkt_size', prominence_fs)
 
-        ## peak features
-        dwl_peak = peak_time_diff(chunk, '2->1Bytes')
-        upl_peak = peak_time_diff(chunk, '1->2Bytes')
+        # coefficient of variation
+        rolling_cv = rolling_normalized_std(resample_1s, 8)
 
-        ## iman's time between peak
-        iman_dwn_time_peak = np.mean(peak_times(chunk,'2->1Bytes',1000000))
-        #iman_up_time_peak = np.mean(peak_times(chunk,'1->2Bytes',50000))
-
-        ## iman's num peak
-        iman_dwn_num_peak = num_peaks(chunk,'2->1Bytes',1000000)
-        #iman_up_num_peak = num_peaks(chunk,'1->2Bytes',50000)
-
-        feat_val = np.hstack((
-            dwl_spectral,
-            dwl_agg,
-            dwl_peak,
-            upl_spectral,
-            upl_agg,
-            upl_peak,
-            iman_dwn_time_peak,
-            #iman_up_time_peak,
-            iman_dwn_num_peak,
-            #iman_up_num_peak
+        chunk_feat = np.hstack((
+            download_avg,
+            download_std,
+            # diff_pkts,
+            peak_feats,
+            # psd_density_stdev,
+            prominence_feat,
+            rolling_cv
         ))
 
-        vals.append(feat_val)
+        vals.append(chunk_feat)
 
-    return pd.DataFrame(columns=features, data=vals).fillna(0)
+    return vals
+
+
+# Create Training Data
+def create_training_data(folder_path, interval, threshold, prominence_fs, binned_fs):
+    resolutions = ['144p', '240p', '360p', '480p', '720p', '1080p']
+
+    training = []
+
+    for res in resolutions:
+        full_path = folder_path + res + '/'
+        data_dir = [full_path + fp for fp in os.listdir(full_path)]
+
+        data_feats = np.vstack(
+            ([create_features(fp, interval, threshold, prominence_fs, binned_fs) for fp in data_dir]))
+
+        temp_df = pd.DataFrame(data=data_feats, columns=features)
+
+        if res in ['144p', '240p']:
+            temp_df['resolution'] = 'low'
+
+        if res in ['360p', '480p']:
+            temp_df['resolution'] = 'medium'
+
+        if res in ['720p', '1080p']:
+            temp_df['resolution'] = 'high'
+
+        training.append(temp_df)
+
+    return pd.concat((training))

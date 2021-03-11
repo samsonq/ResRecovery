@@ -31,9 +31,6 @@
                     </br>
                     <button type="submit" class="btn btn-primary">Predict</button>
                 </form>
-                <br>
-                <br>
-                {{ prediction_text_baseline }}
             </div>
 
             <div class="extended">
@@ -53,10 +50,15 @@
                     </br>
                     <button type="submit" class="btn btn-primary">Predict</button>
                 </form>
-                <br>
-                <br>
-                {{ prediction_text_extended }}
             </div>
+        </div>
+        <br>
+        <br>
+        <br>
+        <br>
+        <div id="predictions">
+            {{ prediction_text_baseline }}
+            {{ prediction_text_extended }}
         </div>
     </body>
 </html>
