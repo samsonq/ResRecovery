@@ -40,11 +40,14 @@ def predict_baseline():
     # Preprocessing & Feature Building
     X = create_features([df], chunk_size)
     X = X[['dwl_bytes_avg', 'dwl_peak_prom', 'upl_bytes_std', 'dwl_bytes_std', 'dwl_max_psd', 'dwl_num_peak']]
-    prediction = stats.mode(extended_model.predict(X))[0][0]
+    array_preds = extended_model.predict(X)
+    prediction = stats.mode(array_preds)[0][0]
     resolutions = {1: "240p", 2: "480p", 3: "1080p"}
+    array_preds = [resolutions[i] for i in array_preds]
+    display_text = "The predicted resolutions for each interval are: {} \n Overall, " \
+                   "the most commonly predicted resolution is: {}.".format(array_preds, resolutions[prediction])
 
-    return render_template('index.html',
-                           prediction_text_extended='The predicted resolution is: {}'.format(resolutions[prediction]))
+    return render_template('index.html', prediction_text_extended=display_text)
 
 
 @app.route('/extended', methods=["POST"])
@@ -61,11 +64,14 @@ def predict_extended():
     # Preprocessing & Feature Building
     X = create_features([df], chunk_size)
     X = X[['dwl_bytes_avg', 'dwl_peak_prom', 'upl_bytes_std', 'dwl_bytes_std', 'dwl_max_psd', 'dwl_num_peak']]
-    prediction = stats.mode(extended_model.predict(X))[0][0]
+    array_preds = extended_model.predict(X)
+    prediction = stats.mode(array_preds)[0][0]
     resolutions = {1: "Low", 2: "Medium", 3: "High"}
+    array_preds = [resolutions[i] for i in array_preds]
+    display_text = "The predicted resolutions for each interval are: {} \n Overall, " \
+                   "the most commonly predicted resolution is: {}.".format(array_preds, resolutions[prediction])
 
-    return render_template('index.html',
-                           prediction_text_extended='The predicted resolution is: {}'.format(resolutions[prediction]))
+    return render_template('index.html', prediction_text_extended=display_text)
 
 
 if __name__ == '__main__':
